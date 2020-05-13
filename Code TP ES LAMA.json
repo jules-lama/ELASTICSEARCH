@@ -1,0 +1,423 @@
+GET _search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET lama-movies/_settings
+
+DELETE lama-movies
+
+PUT lama-movies
+{
+    "settings" : {
+        "index" : {
+            "number_of_shards" : 5, 
+            "number_of_replicas" : 0 
+        }
+    }
+}
+
+PUT lama-movies/movie/99000
+{
+"genres": ["Sci-Fi","IMAX"],
+"title": "Interstellar",
+"year": 2014
+}
+
+GET lama-movies/movie/99000
+
+POST lama-movies/movie/99000/_update
+{
+"doc": {
+"title": "Interstellar -- THE MOVIE!"
+}
+}
+
+DELETE lama-movies/movie/99000
+
+
+
+
+GET /lama-movies/_mapping
+
+GET lama-movies/_search
+{
+"query": {
+"match": {
+"title": "Star Trek"
+}
+},
+"size": 50
+}
+
+GET lama-movies/_search
+{
+"query": {
+"match": {
+"title": "Star Trek"
+}
+},
+"size": 50
+}
+
+GET lama-movies/_search
+{
+"query": {
+"match_phrase": {
+"genres.keyword":"sci"
+}
+}
+}
+
+GET lama-movies/_search
+{
+"query": {
+    "match": {
+        "actors": "Kenan Thompson"
+         }
+    }
+}
+
+GET lama-movies/_search
+{
+  "query": {
+    "match": {
+      "actors": "Harrison Ford"
+    }
+  }
+}
+
+
+GET lama-movies/_search
+{"query":{
+    "bool": {
+        "must": [
+            { "match_phrase": { "title": "Star Wars" }},
+            { "match": { "directors": "George Lucas" }}
+        ]
+}}}
+
+
+
+GET lama-movies/_search
+{  "query": {
+    "match": 
+        {"actors":"Harrison Ford"}
+}}
+
+
+GET lama-movies/_search
+{"query":{
+    "bool": {
+        "must": [
+            { "match": { "actors": "Harrison Ford" }},
+            { "match": { "plot": "Jones" }}
+        ]
+}}}
+
+
+GET lama-movies/_search
+{"query":{
+    "bool": {
+        "must": [
+            { "match": { "actors": "Harrison Ford" }},
+            { "match": { "plot": "Jones" }}
+        ],
+        "must_not" : { "match" : {"plot":"Nazis"}}
+}}}
+
+
+GET lama-movies/_search
+{"query":{
+    "bool": {
+            "must": [
+                { "match_phrase": { "directors": "James Cameron" }},
+                { "range": { "rank": {"lt":1000 }}}
+           ]
+}}}
+
+
+GET lama-movies/_search?pretty
+{"query": {
+  "bool": {
+    "must": [
+      {"match": { "directors.keyword": "James Cameron" }},
+      { "range": { "rating": {"gt":5 }}}
+    ]
+    , "must_not": [
+      {"match":{"genres":"Action"}},
+      {"match":{"genres":"Drama"}}
+    ]
+  }
+}} 
+
+
+GET lama-movies/_search
+{
+    "query": {
+        "bool":{
+            "must": {"match": {"directors": "J.J. Abrams"}},
+            "filter": {"range": {"release_date":
+                { "from": "2010-01-01", "to": "2015-12-31"}}}
+}}}
+
+
+
+
+GET lama-movies/_search
+{"aggs" : {
+    "Moy_base_film" : {
+        "avg" : {"field" : "rating"}
+}}}
+
+
+GET lama-movies/_search
+{
+    "query" :{
+        "match" : {"directors" : "George Lucas"}
+    },
+    "aggs" : {
+            "note_moy_film_GL" : {
+                        "avg" : {"field" : "rating"}
+            }
+}}
+
+
+GET lama-movies/_search
+{"aggs" : {
+     "gpe_genres" : {
+          "terms" : {"field" : "genres.keyword"},
+          "aggs": {
+            "Moy_film_genre": {
+              "avg": {
+                "field": "rating"
+              }
+            }
+          }
+}}}
+
+GET lama-movies/_search
+{"aggs" : {
+     "gpe_genres" : {
+          "terms" : {"field" : "genres.keyword"},
+          "aggs": {
+            "Moy_film": {
+              "avg": {
+                "field": "rating"
+              }
+            },
+            "Note_min" : {"min" : {"field" : "rank"}},
+            "Note_max" : {"max" : {"field" : "rank"}}
+          }
+}}}
+
+GET lama-movies/_search
+{
+  "query": {
+    "match_phrase": {
+      "genres": "Action"
+    }
+  }, 
+  
+  "aggs": {
+    "film_action_1980_2010": {
+      "range": {
+        "field": "year",
+        "ranges": [
+          {
+            "from": 1980,
+            "to": 1990
+          },
+          {
+            "from": 1990,
+            "to": 2000
+          },
+          {
+            "from": 2000,
+            "to": 2010
+          }
+        ]
+      },
+      "aggs": {
+        "Top_3_film": {
+          "max": {
+            "field": "rating"
+          }
+        }
+      }
+    }
+  }
+}
+
+GET lama-movies/_search
+{
+  "aggs": {
+    "Nbre_film_par_note": {
+      "range": {
+        "field": "rating",
+        "ranges": [
+          {
+            "from": 0,
+            "to": 2.5
+          },
+          {
+            "from": 2.5,
+            "to": 4
+          },
+          {
+            "from": 4,
+            "to": 6
+          },
+          {
+            "from": 6,
+            "to": 7.5
+          },
+          {
+            "from": 7.5,
+            "to": 10
+          }
+        ]
+      }
+    }
+  }
+}
+
+PUT lama-movies/_mappings
+{
+    "properties": {
+      "plot": { 
+        "type": "text",
+        "fields": {
+          "keyword": { 
+            "type": "keyword"
+          }
+        }
+      }
+    }
+}
+
+PUT lama-movies/_mapping
+{
+  "properties": {
+    "plot": { 
+      "type":     "text",
+      "fielddata": true,
+      "fielddata_frequency_filter": {
+          "min": 0.001,
+          "max": 0.2,
+          "min_segment_size": 500
+       }
+    }
+  }
+}
+
+
+GET lama-movies/_search
+{
+  "query": {
+    "match": {
+      "directors.keyword": "George Lucas"
+    }
+  },
+   
+  "aggs": {
+    "Terme_plus_utilisés": {
+      "significant_terms": {
+        "field": "plot"
+      }
+    }
+  }
+}
+
+GET lama-movies/_search
+{
+  "query": {
+    "match": {
+      "genres": "Adventure"
+    }
+  },
+
+  "aggs": {
+    "au_moin_5": {
+      "terms": {
+        "field": "directors.keyword",
+        "order" : { "moy_film" : "desc" }
+      },
+      
+      "aggs": {
+        "moy_film": {
+          "avg": {
+            "field": "rating"
+          }
+        }
+      }
+    }
+  }
+}
+
+GET lama-movies/_search
+{
+  "aggs": {
+    "nombre_film": {
+      "date_range": {
+        "field": "release_date",
+        "ranges": [
+          {
+            "from": "2000-01-01",
+            "to": "2000-12-31"
+          },
+          {
+            "from": "2001-01-01",
+            "to": "2001-12-31"
+          },
+          {
+            "from": "2002-01-01",
+            "to": "2002-12-31"
+          }
+        ]
+      }
+    }
+  }
+}
+
+GET lama-movies/_search
+{
+  "aggs": {
+    "Nombre_film": {
+      "range": {
+        "field": "year",
+        "ranges": [
+          {
+            "from": 2000,
+            "to": 2001
+          },
+          {
+            "from": 2001,
+            "to": 2002
+          },
+          {
+            "from": 2002,
+            "to": 2003
+          }
+        ]
+      }
+    }
+  }
+}
+
+
+GET lama-movies/_search
+{
+  "aggs": {
+    "Cat_film": {
+      "terms": {
+        "field": "genres.keyword",
+        "size": 10
+      }
+    }
+  }
+}
+
+//Ensemble de requête
